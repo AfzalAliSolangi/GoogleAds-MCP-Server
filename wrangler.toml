@@ -1,0 +1,25 @@
+name = 'ga-mcp-server-cloudflare'
+main = "src/worker.ts"
+compatibility_date = "2025-03-27"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# KV namespace for per-session MCP bearer tokens.
+# Create once: npx wrangler kv namespace create MCP_SESSIONS
+# Then paste the returned id values below.
+[[kv_namespaces]]
+binding    = "MCP_SESSIONS_KV"
+id         = "20887f55eeb44316b7d8eaa8e0d67380"
+preview_id = "20887f55eeb44316b7d8eaa8e0d67380"
+
+# Secrets (set via dashboard or `wrangler secret put`):
+#   GOOGLE_ADS_DEVELOPER_TOKEN
+#   OAUTH_CLIENT_ID          — required for MCP OAuth façade
+#   OAUTH_CLIENT_SECRET      — required (generate: openssl rand -hex 32)
+#   ACCESS_TOKEN             — optional; only used as fallback in wrangler dev without KV
+# Google Ads API — pick one:
+#   Mode A: GOOGLE_ADS_OAUTH_CLIENT_ID, GOOGLE_ADS_OAUTH_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
+#   Mode B: GCP_SERVICE_ACCOUNT_BASE64, GOOGLE_ADS_IMPERSONATE_USER
+# Optional:
+#   GOOGLE_ADS_LOGIN_CUSTOMER_ID
+#   BASE_URL
