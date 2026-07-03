@@ -85,27 +85,24 @@ describe('search tool allowlist enforcement', () => {
   });
 });
 
-describe('list_accessible_customers allowlist filtering', () => {
-  it('filters response to allowlist intersection', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch')
-      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'at', expires_in: 3600 }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ resourceNames: ['customers/111', 'customers/222', 'customers/333'] }), { status: 200 }));
-    const client = await mcpClient({ ALLOWED_CUSTOMER_IDS: '111,333', GOOGLE_ADS_DEVELOPER_TOKEN: 'tok', GOOGLE_ADS_REFRESH_TOKEN: 'r', GOOGLE_ADS_OAUTH_CLIENT_ID: 'c', GOOGLE_ADS_OAUTH_CLIENT_SECRET: 's' });
+describe('list_accessible_customers allowlist behaviour', () => {
+  it('with allowlist: returns allowlist directly without calling Google API', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    const client = await mcpClient({ ALLOWED_CUSTOMER_IDS: '111,333' });
     const result = await client.callTool({ name: 'list_accessible_customers', arguments: {} }) as { content: Array<{ text: string }> };
     const parsed = JSON.parse(result.content[0]!.text);
-    expect(parsed.result).toEqual(expect.arrayContaining(['111', '333']));
-    expect(parsed.result).not.toContain('222');
+    expect(parsed.result).toEqual(['111', '333']);
+    expect(fetchSpy).not.toHaveBeenCalled(); // no Google API call needed
     fetchSpy.mockRestore();
   });
 
-  it('empty allowlist → returns []', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch')
-      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'at', expires_in: 3600 }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ resourceNames: ['customers/111'] }), { status: 200 }));
-    const client = await mcpClient({ ALLOWED_CUSTOMER_IDS: '', GOOGLE_ADS_DEVELOPER_TOKEN: 'tok', GOOGLE_ADS_REFRESH_TOKEN: 'r', GOOGLE_ADS_OAUTH_CLIENT_ID: 'c', GOOGLE_ADS_OAUTH_CLIENT_SECRET: 's' });
+  it('empty allowlist → returns [] without calling Google API', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch');
+    const client = await mcpClient({ ALLOWED_CUSTOMER_IDS: '' });
     const result = await client.callTool({ name: 'list_accessible_customers', arguments: {} }) as { content: Array<{ text: string }> };
     const parsed = JSON.parse(result.content[0]!.text);
     expect(parsed.result).toEqual([]);
+    expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
 });

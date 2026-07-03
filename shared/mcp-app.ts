@@ -136,14 +136,18 @@ Args:
     },
     async () => {
       try {
+        // When a client allowlist is configured, return it directly.
+        // listAccessibleCustomers only returns top-level MCC accounts, not child accounts,
+        // so filtering its response would always exclude MCC-child customer IDs.
+        if (allowed !== undefined) {
+          return toolJsonResult(allowed);
+        }
         const res = await adsFetch(env, `${ADS_API_VERSION}/customers:listAccessibleCustomers`, {
           method: 'GET',
         });
         const data = await adsReadJson<{ resourceNames?: string[] }>(res);
         const ids = (data.resourceNames ?? []).map(rn => rn.replace(/^customers\//, ''));
-        // filter to allowlist; [] allowed = returns [] (fail-safe deny); undefined = unrestricted
-        const visible = allowed !== undefined ? ids.filter(id => allowed.includes(normalizeCustomerId(id))) : ids;
-        return toolJsonResult(visible);
+        return toolJsonResult(ids);
       } catch (err) {
         return toolError(
           `list_accessible_customers failed: ${err instanceof Error ? err.message : String(err)}`,
