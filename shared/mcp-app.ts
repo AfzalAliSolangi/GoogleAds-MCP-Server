@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { GaMcpEnv } from './env.js';
+import { isCustomerAllowed, normalizeCustomerId, parseAllowedCustomerIds } from './allowlist.js';
 import { buildGaqlQuery } from './ga-query.js';
 import {
   ADS_API_VERSION,
@@ -63,9 +64,12 @@ async function fetchExternalDoc(url: string): Promise<string> {
 
 export function createMcpServer(env: GaMcpEnv) {
   const server = new McpServer({
-    name: 'ga-mcp-server-cloudflare',
+    name: 'ga-mcp-clients',
     version: MCP_VERSION,
   });
+
+  // parsed once per server instance; undefined = unrestricted (admin/local), [] = deny all
+  const allowed = parseAllowedCustomerIds(env);
 
   server.registerTool(
     'get_resource_metadata',
@@ -137,7 +141,9 @@ Args:
         });
         const data = await adsReadJson<{ resourceNames?: string[] }>(res);
         const ids = (data.resourceNames ?? []).map(rn => rn.replace(/^customers\//, ''));
-        return toolJsonResult(ids);
+        // filter to allowlist; [] allowed = returns [] (fail-safe deny); undefined = unrestricted
+        const visible = allowed !== undefined ? ids.filter(id => allowed.includes(normalizeCustomerId(id))) : ids;
+        return toolJsonResult(visible);
       } catch (err) {
         return toolError(
           `list_accessible_customers failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -181,7 +187,13 @@ Args:
       try {
         const query = buildGaqlQuery({ fields, resource, conditions, orderings, limit, date_range });
         console.error('[search] GAQL', query);
-        const cid = customer_id.replace(/-/g, '');
+        const cid = normalizeCustomerId(customer_id);
+        if (allowed !== undefined && allowed.length === 0) {
+          return toolError('search failed: no customer IDs are configured for this client (access denied).');
+        }
+        if (!isCustomerAllowed(allowed, cid)) {
+          return toolError(`search failed: customer_id ${cid} is not in this client's allowed accounts.`);
+        }
         const res = await adsFetch(env, `${ADS_API_VERSION}/customers/${cid}/googleAds:searchStream`, {
           method: 'POST',
           jsonBody: { query },

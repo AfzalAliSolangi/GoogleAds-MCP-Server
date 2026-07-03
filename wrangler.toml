@@ -1,25 +1,26 @@
-name = 'ga-mcp-server-cloudflare'
+name = 'ga-mcp-clients'
 main = "src/worker.ts"
-compatibility_date = "2025-03-27"
+compatibility_date = "2026-03-27"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
-# KV namespace for per-session MCP bearer tokens.
-# Create once: npx wrangler kv namespace create MCP_SESSIONS
-# Then paste the returned id values below.
+# KV namespace — stores MCP session tokens, client configs, and oauth_client_index entries.
+# IMPORTANT: This must be a NEW namespace, separate from the old ga-mcp-server-cloudflare namespace.
+# Create: npx wrangler kv namespace create GA_MCP_KV
+# Then paste the returned id values below (replace the placeholder).
 [[kv_namespaces]]
-binding    = "MCP_SESSIONS_KV"
-id         = "20887f55eeb44316b7d8eaa8e0d67380"
-preview_id = "20887f55eeb44316b7d8eaa8e0d67380"
+binding    = "GA_MCP_KV"
+id         = "ff493d28ccbd456bb3a2fd7f891fea9a"
+preview_id = "ff493d28ccbd456bb3a2fd7f891fea9a"
 
-# Secrets (set via dashboard or `wrangler secret put`):
-#   GOOGLE_ADS_DEVELOPER_TOKEN
-#   OAUTH_CLIENT_ID          — required for MCP OAuth façade
-#   OAUTH_CLIENT_SECRET      — required (generate: openssl rand -hex 32)
-#   ACCESS_TOKEN             — optional; only used as fallback in wrangler dev without KV
-# Google Ads API — pick one:
+# Secrets — set fresh on this worker via `wrangler secret put <NAME>`:
+#   GOOGLE_ADS_DEVELOPER_TOKEN    — always required
+#   OAUTH_CLIENT_ID               — optional; required for root /mcp admin endpoint
+#   OAUTH_CLIENT_SECRET           — optional; required for root /mcp admin endpoint
+#   ACCESS_TOKEN                  — optional; fallback for wrangler dev without KV
+# Google Ads API — pick one auth mode:
 #   Mode A: GOOGLE_ADS_OAUTH_CLIENT_ID, GOOGLE_ADS_OAUTH_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
 #   Mode B: GCP_SERVICE_ACCOUNT_BASE64, GOOGLE_ADS_IMPERSONATE_USER
 # Optional:
-#   GOOGLE_ADS_LOGIN_CUSTOMER_ID
-#   BASE_URL
+#   GOOGLE_ADS_LOGIN_CUSTOMER_ID  — global MCC manager account ID (shared across all tenants)
+#   BASE_URL                      — set to origin only (e.g. https://ga-mcp-clients.example.workers.dev)

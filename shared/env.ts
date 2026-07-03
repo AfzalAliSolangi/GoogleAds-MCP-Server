@@ -11,7 +11,7 @@ export interface GaMcpEnv {
   GOOGLE_ADS_IMPERSONATE_USER?: string;
   GOOGLE_ADS_DEVELOPER_TOKEN?: string;
   GOOGLE_ADS_LOGIN_CUSTOMER_ID?: string;
-  /** Static bearer — only used as fallback when MCP_SESSIONS_KV is not bound (local wrangler dev). */
+  /** Static bearer — only used as fallback when GA_MCP_KV is not bound (local wrangler dev / no KV). */
   ACCESS_TOKEN?: string;
   OAUTH_CLIENT_ID?: string;
   OAUTH_CLIENT_SECRET?: string;
@@ -21,6 +21,8 @@ export interface GaMcpEnv {
   BASE_URL?: string;
   PORT?: string;
   /** KV namespace for per-session MCP bearer tokens (Cloudflare Worker only). */
-  MCP_SESSIONS_KV?: KVNamespace;
+  GA_MCP_KV?: KVNamespace;
+  /** Comma-joined digits-only customer IDs. undefined = unrestricted; empty string = deny all. */
+  ALLOWED_CUSTOMER_IDS?: string;
   [key: string]: string | KVNamespace | undefined;
 }

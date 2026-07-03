@@ -55,17 +55,19 @@ export async function issueMcpSessionToken(
 }
 
 /**
- * Validate a bearer token by looking it up in KV.
- * KV's own TTL handles expiry — absent key = expired or invalid.
+ * Validate a bearer token and assert it was issued for expectedClientId.
+ * !expectedClientId short-circuits to allow root/admin endpoint (no per-tenant env).
  */
-export async function validateMcpBearerFromKv(
+export async function validateSessionForClient(
   kv: KVNamespace,
   authHeader: string | null | undefined,
+  expectedClientId: string,
 ): Promise<boolean> {
   const token = bearerTokenFromAuthHeader(authHeader);
   if (!token) return false;
-  const entry = await kv.get(`mcp_session:${token}`);
-  return entry !== null;
+  const raw = await kv.get(`mcp_session:${token}`, 'json') as { clientId?: string } | null;
+  if (!raw) return false;
+  return !expectedClientId || raw.clientId === expectedClientId;
 }
 
 function base64UrlEncodeBytes(bytes: Uint8Array): string {

@@ -1,5 +1,5 @@
 {
-  "name": "ga-mcp-server-cloudflare",
+  "name": "ga-mcp-clients",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

@@ -31,7 +31,7 @@ function nodeOrWorkerRuntime(): string {
 }
 
 export function buildApiClientHeader(): string {
-  const tag = `ga-mcp-server-cloudflare/${MCP_PACKAGE_VERSION}`;
+  const tag = `ga-mcp-clients/${MCP_PACKAGE_VERSION}`;
   return `rest framework/TS gl-node/${nodeOrWorkerRuntime()} ${tag}`;
 }
 
