@@ -29,7 +29,23 @@ interface ClientConfig {
 }
 
 async function loadClientConfig(kv: KVNamespace, name: string): Promise<ClientConfig | null> {
-  return kv.get(`client:${name}`, 'json') as Promise<ClientConfig | null>;
+  const raw = await kv.get(`client:${name}`, 'json');
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    if (raw !== null) console.error(`[loadClientConfig] Invalid config shape for client:${name}`);
+    return null;
+  }
+  const cfg = raw as Record<string, unknown>;
+  if (typeof cfg.oauthClientId !== 'string' ||
+      typeof cfg.oauthClientSecret !== 'string' ||
+      !Array.isArray(cfg.allowedCustomerIds)) {
+    console.error(`[loadClientConfig] Missing or invalid fields in client:${name}`);
+    return null; // malformed config → 404, not crash
+  }
+  return {
+    oauthClientId: cfg.oauthClientId,
+    oauthClientSecret: cfg.oauthClientSecret,
+    allowedCustomerIds: (cfg.allowedCustomerIds as unknown[]).map(String),
+  };
 }
 
 function makeClientEnv(base: GaMcpEnv, cfg: ClientConfig): GaMcpEnv {

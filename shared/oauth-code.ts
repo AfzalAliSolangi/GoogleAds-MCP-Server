@@ -63,11 +63,12 @@ export async function validateSessionForClient(
   authHeader: string | null | undefined,
   expectedClientId: string,
 ): Promise<boolean> {
+  if (!expectedClientId) return false; // no client configured → deny; root /mcp requires OAUTH_CLIENT_ID secret
   const token = bearerTokenFromAuthHeader(authHeader);
   if (!token) return false;
   const raw = await kv.get(`mcp_session:${token}`, 'json') as { clientId?: string } | null;
   if (!raw) return false;
-  return !expectedClientId || raw.clientId === expectedClientId;
+  return raw.clientId === expectedClientId;
 }
 
 function base64UrlEncodeBytes(bytes: Uint8Array): string {

@@ -11,6 +11,13 @@ export const GAQL_DATE_LITERALS = new Set([
   'THIS_WEEK_MON_TODAY',
 ]);
 
+const GAQL_IDENT = /^[a-zA-Z_][a-zA-Z0-9_.]*$/;
+const GAQL_RESOURCE = /^[a-z_]+$/;
+
+function assertGaqlIdentifier(value: string, label: string): void {
+  if (!GAQL_IDENT.test(value)) throw new Error(`Invalid GAQL ${label}: "${value}"`);
+}
+
 export function buildGaqlQuery(args: {
   fields: string[];
   resource: string;
@@ -19,6 +26,16 @@ export function buildGaqlQuery(args: {
   limit?: number | string | null;
   date_range?: string | null;
 }): string {
+  if (!GAQL_RESOURCE.test(args.resource)) throw new Error(`Invalid GAQL resource: "${args.resource}"`);
+  for (const f of args.fields) assertGaqlIdentifier(f, 'field');
+  if (args.orderings?.length) {
+    for (const o of args.orderings) {
+      // orderings may be "field.name ASC" or "field.name DESC"
+      const base = o.replace(/\s+(ASC|DESC)$/i, '').trim();
+      assertGaqlIdentifier(base, 'ordering');
+    }
+  }
+
   const allConditions: string[] = [];
   if (args.date_range && GAQL_DATE_LITERALS.has(args.date_range)) {
     allConditions.push(`segments.date DURING ${args.date_range}`);
