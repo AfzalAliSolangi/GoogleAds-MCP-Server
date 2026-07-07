@@ -127,6 +127,12 @@ ${SEARCH_DOC}
     https://developers.google.com/google-ads/api/docs/conversions/upload-summaries
 
 
+### Hint for keyword_view
+    keyword_view returns BOTH positive (target) keywords AND negative keywords.
+    Unless the user explicitly asks for negative keywords, you MUST include this condition:
+        ad_group_criterion.negative = FALSE
+    Omitting it inflates row counts with negatives that carry zero spend and corrupt analysis.
+
 ### Hints for all resources
     What follows is a list of valid resources that can be queried.
     To find out which specific fields you can select, filter by, or sort by for a given resource, you MUST use the \`get_resource_metadata\` tool.

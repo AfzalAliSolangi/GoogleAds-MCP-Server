@@ -31,6 +31,7 @@ describe('MCP server registration', () => {
     const search = tools.find(t => t.name === 'search');
     expect(search?.description).toContain('### Hints');
     expect(search?.description).toContain('get_resource_metadata');
+    expect(search?.description).toContain('ad_group_criterion.negative = FALSE');
     expect(buildSearchToolDescription('2026-01-01')).toContain('accessible_bidding_strategy');
   });
 });
